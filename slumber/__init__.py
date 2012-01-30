@@ -91,14 +91,18 @@ class Resource(ResourceAttributesMixin, object):
     def get_serializer(self):
         return Serializer(default_format=self._store["format"])
 
-    def _request(self, method, data=None, params=None):
+    def _request(self, method, data=None, params=None, custom_headers=None):
         s = self.get_serializer()
         url = self._store["base_url"]
 
         if self._store["append_slash"] and not url.endswith("/"):
             url = url + "/"
-
-        resp = self._store["session"].request(method, url, data=data, params=params, headers={"content-type": s.get_content_type()})
+        
+        headers={"content-type": s.get_content_type()}
+        if custom_headers is not None:
+            headers.update(custom_headers)
+        
+        resp = self._store["session"].request(method, url, data=data, params=params, headers=headers)
 
         if 400 <= resp.status_code <= 499:
             raise exceptions.HttpClientError("Client Error %s: %s" % (resp.status_code, url), response=resp, content=resp.content)
