@@ -101,6 +101,10 @@ class Resource(ResourceAttributesMixin, object):
         headers={"content-type": s.get_content_type()}
         if custom_headers is not None:
             headers.update(custom_headers)
+
+        obj_headers = getattr(self._store, "custom_headers", None)
+        if obj_headers:
+            headers.update(obj_headers)
         
         resp = self._store["session"].request(method, url, data=data, params=params, headers=headers)
 
@@ -163,12 +167,14 @@ class Resource(ResourceAttributesMixin, object):
 
 class API(ResourceAttributesMixin, object):
 
-    def __init__(self, base_url=None, auth=None, format=None, append_slash=True):
+    def __init__(self, base_url=None, auth=None, format=None, append_slash=True,
+                 custom_headers=None):
         self._store = {
             "base_url": base_url,
             "format": format if format is not None else "json",
             "append_slash": append_slash,
             "session": requests.session(auth=auth),
+            "custom_headers": custom_headers if custom_headers is not None else {}
         }
 
         # Do some Checks for Required Values
